@@ -2,9 +2,12 @@ package org.atnos.eff.addon.zio
 
 
 import cats._
+import cats.instances.either._
 import org.atnos.eff._
 import org.atnos.eff.create.send
 import zio.{IO, ZIO}
+
+import scala.util.Either
 
 
 trait ZIOCreation {
@@ -55,6 +58,15 @@ trait ZIOInterpretation {
 
   def runSequential[R, ENV, E, A](e: Eff[R, A])(implicit m: Member.Aux[ZIO[ENV, E, ?], R, NoFx]): ZIO[ENV, E, A] =
     Eff.detach[ZIO[ENV, E, ?], R, A, E](e)(zioMonad, m)
+
+  import interpret.of
+
+  def runAsyncEither[R, ENV, E, A](e: Eff[R, A])(implicit zio: ZIO[ENV, E, ?] /= R): Eff[R, E Either A] =
+    interpret.interceptNatM[R, ZIO[ENV, E, ?], E Either ?, A](e,
+      new (ZIO[ENV, E, ?] ~> (ZIO[ENV, E, ?] of (E Either ?))#l) {
+        def apply[X](fa: ZIO[ENV, E, X]): ZIO[ENV, E, E Either X] =
+          fa.either
+      })
 }
 
 object ZIOInterpretation extends ZIOInterpretation
