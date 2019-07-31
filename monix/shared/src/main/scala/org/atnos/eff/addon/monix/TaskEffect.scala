@@ -66,7 +66,7 @@ object TaskCreation extends TaskCreation
 trait TaskInterpretation extends TaskTypes {
 
   private val monixTaskMonad: MonadError[Task, Throwable] =
-    MonadError[Task, Throwable]
+    MonadError.apply[Task, Throwable]
 
   private val monixTaskApplicative = new Applicative[Task] {
     override def ap[A, B](ff: Task[(A) => B])(fa: Task[A]): Task[B] = Task.mapBoth(ff, fa)(_ (_))
